@@ -1,0 +1,1 @@
+pstree -apl | grep 'sh' -A3 -B3
