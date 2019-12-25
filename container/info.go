@@ -107,3 +107,43 @@ func ListContainers() (err error) {
 
 	return
 }
+
+// GetContainerInfoByID 根据容器ID获取其详细的信息
+func GetContainerInfoByID(containerID string) (containerInfo *Info, err error) {
+	var (
+		containerInfoPath = path.Join(getContainerInfoDir(containerID), ConfigName)
+		byteData          []byte
+	)
+	containerInfo = &Info{}
+	if byteData, err = ioutil.ReadFile(containerInfoPath); err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("no such container with id %s or it has no log file", containerID)
+		}
+		return nil, fmt.Errorf("open file %s error, %v", containerInfoPath, err)
+	}
+
+	if err = json.Unmarshal(byteData, containerInfo); err != nil {
+		return nil, fmt.Errorf("parse container %s info error, %v", containerID, err)
+	}
+
+	return
+}
+
+// UpdateContainerInfo 更新本地存储的容器信息
+func UpdateContainerInfo(containerInfo *Info) (err error) {
+	var (
+		configFilePath = path.Join(getContainerInfoDir(containerInfo.ID), ConfigName)
+		byteDate       []byte
+	)
+
+	// 将容器信息的对象 json 序列化成字符串
+	if byteDate, err = json.Marshal(containerInfo); err != nil {
+		return fmt.Errorf("convert container data %#v into json error, %v", *containerInfo, err)
+	}
+
+	// 重新写入
+	if err = ioutil.WriteFile(configFilePath, byteDate, 0755); err != nil {
+		return fmt.Errorf("write to file %s failed, %v", configFilePath, err)
+	}
+	return
+}

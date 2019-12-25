@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	_ "go-container-process-survey/cgo"
+	"go-container-process-survey/cgo_key"
 	"go-container-process-survey/container"
 	"log"
 	"os"
@@ -24,6 +26,10 @@ func init() {
 
 func main() {
 	if os.Args[0] == "/proc/self/exe" { // child process
+		// note here, just a hack ... goto exec part (in child process)
+		if len(os.Args) > 1 && os.Args[1] == "exec" {
+			goto EXEC
+		}
 		childProcess()
 		return
 	}
@@ -39,13 +45,33 @@ func main() {
 		}
 		return
 	}
+	if os.Args[1] == "stop" { // stop a container
+		if err := container.StopContainerByID(os.Args[2]); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+EXEC:
+	if os.Args[1] == "exec" { // 进入正在运行的容器内部，默认输入合法 exec <id> <cmd ...>
+		if os.Getenv(cgo_key.EnvFlag) != "" { // using cgo
+			return
+		}
+		id := os.Args[2]
+		cmd := os.Args[3:]
+		if err := container.Exec(id, cmd); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 
 	var (
 		containerID = container.RandStringBytes(container.IDLen) //  // 生成容器的ID号
 		err         error
 		cmd         = exec.Command("/proc/self/exe")
 	)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Cloneflags: syscall.CLONE_NEWNS | syscall.CLONE_NEWPID}
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Cloneflags: syscall.CLONE_NEWNS | syscall.CLONE_NEWPID |
+			syscall.CLONE_NEWIPC | syscall.CLONE_NEWUTS | syscall.CLONE_NEWNET}
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
