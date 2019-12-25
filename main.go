@@ -30,7 +30,7 @@ func main() {
 		if len(os.Args) > 1 && os.Args[1] == "exec" {
 			goto EXEC
 		}
-		if len(os.Args) > 1 && os.Args[1] == "start" {
+		if len(os.Args) > 1 && os.Args[1] == "start" { // start a container in child process
 			fullCmd, _ := exec.LookPath(os.Args[2])
 			childProcess(fullCmd, os.Args[2:])
 			return
@@ -82,40 +82,8 @@ EXEC:
 		return
 	}
 
-	var (
-		containerID = container.RandStringBytes(container.IDLen) //  // 生成容器的ID号
-		err         error
-		cmd         = exec.Command("/proc/self/exe")
-	)
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Cloneflags: syscall.CLONE_NEWNS | syscall.CLONE_NEWPID |
-			syscall.CLONE_NEWIPC | syscall.CLONE_NEWUTS | syscall.CLONE_NEWNET}
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	if *runAsDaemon { // 如果为后台运行模式，设置输出的文件
-		var stdLog *os.File
-		if stdLog, err = container.StdLog(containerID); err != nil {
-			log.Fatalf("create log file failed: %v", err)
-		}
-		cmd.Stderr = stdLog
-		cmd.Stdout = stdLog
-	}
-	if err := cmd.Start(); err != nil {
-		log.Fatalf("cmd.Start() failed: %v", err)
-	}
-
-	if err = container.RecordContainerInfo(containerID, cmd.Process.Pid, defaultCmd, *containerName); err != nil { // 记录容器信息
-		log.Fatalf("record container info failed: %v", err)
-	}
-
-	if !*runAsDaemon { // 前台运行模式
-		defer container.DeleteContainerInfo(containerID)
-		if err = cmd.Wait(); err != nil {
-			log.Fatalf("cmd.Wait %s", err)
-		}
-	} else { // 后台运行模式
-		log.Println(containerID)
+	if err := container.RunContainer(defaultCmd, *runAsDaemon, *containerName); err != nil {
+		log.Fatalf("Run container failed: %v", err)
 	}
 }
 
