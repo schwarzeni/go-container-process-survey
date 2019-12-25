@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/signal"
 	"syscall"
 )
 
@@ -37,9 +38,23 @@ func RunContainer(defaultCmd []string, daemon bool, name string) (err error) {
 	}
 
 	if !daemon { // 前台运行模式
-		defer DeleteContainerInfo(containerID)
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt) // 监听 ctrl+c 事件
+		go func() {
+			for range c {
+				DeleteContainerInfo(containerID)
+				if err := cmd.Process.Signal(os.Interrupt); err != nil {
+					log.Printf("send signal to child process failed, %v", err)
+				}
+				break
+			}
+			close(c)
+		}()
 		if err = cmd.Wait(); err != nil {
-			return fmt.Errorf("cmd.Wait %s", err)
+			if cmd.ProcessState.ExitCode() == 130 { // ignore ctrl+c errror
+				return nil
+			}
+			return fmt.Errorf("cmd.Wait %v", err)
 		}
 	} else { // 后台运行模式
 		log.Println(containerID)
