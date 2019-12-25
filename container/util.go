@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-// randStringBytes 生成指定长度的随机字符串
-func randStringBytes(n int) string {
+// RandStringBytes 生成指定长度的随机字符串
+func RandStringBytes(n int) string {
 	letterBytes := "1234567890"
 	b := make([]byte, n)
 	rand.Seed(time.Now().UnixNano())

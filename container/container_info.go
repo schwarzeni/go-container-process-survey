@@ -13,6 +13,8 @@ var (
 	defaultInfoLocation string = "/var/run/mydocker/%s/"
 	// ConfigName 配置文件标题
 	ConfigName string = "config.json"
+	// LogFileName 容器的日志文件
+	LogFileName string = "container.log"
 	// IDLen ID长度
 	IDLen int = 10
 )

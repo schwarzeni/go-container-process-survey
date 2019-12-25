@@ -13,8 +13,8 @@ import (
 var (
 	runAsDaemon   = flag.Bool("d", false, "后台运行")
 	containerName = flag.String("name", "", "容器的名称")
-	defaultCmd    = []string{"sh", "-c", `while true ; do sleep 2; done`}
-	// defaultCmd    = []string{"sh", "-c", `while true ; do sleep 2; echo $(date); done`}
+	// defaultCmd    = []string{"sh", "-c", `while true ; do sleep 2; done`}
+	defaultCmd = []string{"sh", "-c", `while true ; do sleep 2; echo \[$$\] $(date); done`}
 	// defaultCmd = []string{"sh", "-c", `for i in $(seq 1 4);do echo "Welcome $i";sleep 1;done`}
 )
 
@@ -33,28 +33,45 @@ func main() {
 		}
 		return
 	}
+	if os.Args[1] == "logs" { // show log, 注意这里就不判断用户是否提供了容器ID了，默认输入合法
+		if err := container.GetLogContent(os.Args[2]); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
 	var (
-		containerID string
+		containerID = container.RandStringBytes(container.IDLen) //  // 生成容器的ID号
 		err         error
 		cmd         = exec.Command("/proc/self/exe")
 	)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Cloneflags: syscall.CLONE_NEWNS | syscall.CLONE_NEWPID}
 	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	if *runAsDaemon { // 如果为后台运行模式，设置输出的文件
+		var stdLog *os.File
+		if stdLog, err = container.StdLog(containerID); err != nil {
+			log.Fatalf("create log file failed: %v", err)
+		}
+		cmd.Stderr = stdLog
+		cmd.Stdout = stdLog
+	}
 	if err := cmd.Start(); err != nil {
 		log.Fatalf("cmd.Start() failed: %v", err)
 	}
 
-	if containerID, err = container.RecordContainerInfo(cmd.Process.Pid, defaultCmd, *containerName); err != nil {
+	if err = container.RecordContainerInfo(containerID, cmd.Process.Pid, defaultCmd, *containerName); err != nil { // 记录容器信息
 		log.Fatalf("record container info failed: %v", err)
 	}
 
-	if !*runAsDaemon {
+	if !*runAsDaemon { // 前台运行模式
 		defer container.DeleteContainerInfo(containerID)
 		if err = cmd.Wait(); err != nil {
 			log.Fatalf("cmd.Wait %s", err)
 		}
+	} else { // 后台运行模式
+		log.Println(containerID)
 	}
 }
 
