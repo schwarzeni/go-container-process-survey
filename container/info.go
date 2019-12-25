@@ -7,14 +7,13 @@ import (
 	"os"
 	"path"
 	"strconv"
-	"strings"
 	"time"
 )
 
 // RecordContainerInfo 记录容器信息, 返回生成的容器的ID
 func RecordContainerInfo(id string, containerPID int, cmdArr []string, containerName string) (err error) {
 	var (
-		cmd        = strings.Join(cmdArr, " ")
+		// cmd        = strings.Join(cmdArr, " ")
 		createTime = time.Now().Format("2006-01-02 15:04:05") // 以当前的时间作为创建时间
 		info       *containerInfo                             // 新建的容器的信息
 		dirURL     string                                     // 存储数据的文件夹的路径
@@ -29,7 +28,8 @@ func RecordContainerInfo(id string, containerPID int, cmdArr []string, container
 	info = &containerInfo{
 		ID:          id,
 		Pid:         strconv.Itoa(containerPID),
-		Command:     cmd,
+		Command:     cmdArr[0],
+		FullCommand: cmdArr,
 		CreatedTime: createTime,
 		Status:      RUNNING,
 		Name:        containerName,

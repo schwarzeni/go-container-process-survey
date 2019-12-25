@@ -21,12 +21,13 @@ var (
 
 // 存储容器相关信息的json结构
 type containerInfo struct {
-	Pid         string `json:"pid"`        // 容器的init的进程在宿主机上的PID
-	ID          string `json:"id"`         // 容器ID
-	Name        string `json:"name"`       // 容器名称
-	Command     string `json:"command"`    // 容器内 init 进程的运行命令
-	CreatedTime string `json:"createTime"` // 创建时间
-	Status      string `json:"status"`     // 容器状态
+	Pid         string   `json:"pid"`         // 容器的init的进程在宿主机上的PID
+	ID          string   `json:"id"`          // 容器ID
+	Name        string   `json:"name"`        // 容器名称
+	Command     string   `json:"command"`     // 容器内 init 进程的运行命令
+	FullCommand []string `json:"fullCommand"` // command and args
+	CreatedTime string   `json:"createTime"`  // 创建时间
+	Status      string   `json:"status"`      // 容器状态
 }
 
 // Info 存储容器相关信息的json结构

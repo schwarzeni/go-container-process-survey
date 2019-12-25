@@ -30,7 +30,13 @@ func main() {
 		if len(os.Args) > 1 && os.Args[1] == "exec" {
 			goto EXEC
 		}
-		childProcess()
+		if len(os.Args) > 1 && os.Args[1] == "start" {
+			fullCmd, _ := exec.LookPath(os.Args[2])
+			childProcess(fullCmd, os.Args[2:])
+			return
+		}
+		fullCmd, _ := exec.LookPath(defaultCmd[0])
+		childProcess(fullCmd, defaultCmd)
 		return
 	}
 	if os.Args[1] == "ps" { // show process
@@ -53,6 +59,12 @@ func main() {
 	}
 	if os.Args[1] == "rm" { // delete a container
 		if err := container.RemoveContainerByID(os.Args[2]); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+	if os.Args[1] == "start" { // start a stop container
+		if err := container.StartContainerByID(os.Args[2]); err != nil {
 			log.Fatal(err)
 		}
 		return
@@ -107,13 +119,13 @@ EXEC:
 	}
 }
 
-func childProcess() {
+func childProcess(fullCmd string, cmdAndArgs []string) {
 	syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, "")
 	if err := syscall.Mount("proc", "/proc", "proc", syscall.MS_NOEXEC|syscall.MS_NOSUID|syscall.MS_NODEV, ""); err != nil {
 		fmt.Fprintf(os.Stderr, "mount proc error %v", err)
 		return
 	}
-	if err := syscall.Exec("/bin/sh", defaultCmd, os.Environ()); err != nil {
+	if err := syscall.Exec(fullCmd, cmdAndArgs, os.Environ()); err != nil {
 		fmt.Fprintf(os.Stderr, "exec error %v", err)
 		return
 	}

@@ -23,6 +23,18 @@ func StdLog(containerID string) (stdLog *os.File, err error) {
 	return
 }
 
+// StdAppendLog 将日志输出至已有文件
+func StdAppendLog(containerID string) (stdLog *os.File, err error) {
+	var (
+		containerInfoDir = getContainerInfoDir(containerID)
+		logFilePath      = path.Join(containerInfoDir, LogFileName)
+	)
+	if stdLog, err = os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755); err != nil {
+		return nil, fmt.Errorf("open file %s failed, %v", logFilePath, err)
+	}
+	return
+}
+
 // GetLogContent 读取后台运行程序的日志输出
 func GetLogContent(containerID string) (err error) {
 	var (
