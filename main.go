@@ -51,6 +51,12 @@ func main() {
 		}
 		return
 	}
+	if os.Args[1] == "rm" { // delete a container
+		if err := container.RemoveContainerByID(os.Args[2]); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 EXEC:
 	if os.Args[1] == "exec" { // 进入正在运行的容器内部，默认输入合法 exec <id> <cmd ...>
 		if os.Getenv(cgo_key.EnvFlag) != "" { // using cgo
