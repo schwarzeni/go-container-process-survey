@@ -3,6 +3,7 @@ package container
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
@@ -68,5 +69,41 @@ func DeleteContainerInfo(containerID string) (err error) {
 	if err = os.RemoveAll(dirURL); err != nil {
 		return fmt.Errorf("remove %s failed, %v", dirURL, err)
 	}
+	return
+}
+
+// ListContainers 列出container信息
+func ListContainers() (err error) {
+	var (
+		dirURL     = fmt.Sprintf(defaultInfoLocation, "")
+		files      []os.FileInfo
+		containers []*containerInfo
+	)
+	if files, err = ioutil.ReadDir(dirURL); err != nil {
+		return fmt.Errorf("read dir %s : %v", dirURL, err)
+	}
+
+	// 遍历该文件夹下的所有文件
+	// TODO: 是否并行读取文件？
+	for _, fileinfo := range files {
+		var (
+			filePath  = path.Join(fmt.Sprintf(defaultInfoLocation, fileinfo.Name()), ConfigName)
+			byteData  []byte
+			container containerInfo
+		)
+		if byteData, err = ioutil.ReadFile(filePath); err != nil {
+			return fmt.Errorf("read file %s : %v", filePath, err)
+		}
+		if err = json.Unmarshal(byteData, &container); err != nil {
+			return fmt.Errorf("unmarshal json data : %v", err)
+		}
+		containers = append(containers, &container)
+	}
+
+	// 此处打印信息就不和书上一样了，意思意思就行了
+	for _, container := range containers {
+		fmt.Printf("%#v\n", *container)
+	}
+
 	return
 }

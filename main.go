@@ -13,8 +13,9 @@ import (
 var (
 	runAsDaemon   = flag.Bool("d", false, "后台运行")
 	containerName = flag.String("name", "", "容器的名称")
+	defaultCmd    = []string{"sh", "-c", `while true ; do sleep 2; done`}
 	// defaultCmd    = []string{"sh", "-c", `while true ; do sleep 2; echo $(date); done`}
-	defaultCmd = []string{"sh", "-c", `for i in $(seq 1 4);do echo "Welcome $i";sleep 1;done`}
+	// defaultCmd = []string{"sh", "-c", `for i in $(seq 1 4);do echo "Welcome $i";sleep 1;done`}
 )
 
 func init() {
@@ -24,6 +25,12 @@ func init() {
 func main() {
 	if os.Args[0] == "/proc/self/exe" { // child process
 		childProcess()
+		return
+	}
+	if os.Args[1] == "ps" { // show process
+		if err := container.ListContainers(); err != nil {
+			log.Fatal(err)
+		}
 		return
 	}
 	var (
@@ -43,7 +50,7 @@ func main() {
 		log.Fatalf("record container info failed: %v", err)
 	}
 
-	if *runAsDaemon {
+	if !*runAsDaemon {
 		defer container.DeleteContainerInfo(containerID)
 		if err = cmd.Wait(); err != nil {
 			log.Fatalf("cmd.Wait %s", err)
