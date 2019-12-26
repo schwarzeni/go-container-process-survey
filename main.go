@@ -13,7 +13,7 @@ import (
 var (
 	runAsDaemon   = flag.Bool("d", false, "后台运行")
 	containerName = flag.String("name", "", "容器的名称")
-	imagePath     = flag.String("image", "/root/workplace_go/go-container-process-survey/build/busybox", "容器镜像文件系统的位置")
+	imagePath     = flag.String("image", "build/busybox", "容器镜像文件系统的位置")
 	volumes       = flag.String("v", "", "挂载的数据卷")
 	envs          = flag.String("e", "", "传入的环境变量")
 	// defaultCmd    = []string{"sh", "-c", `while true ; do sleep 2; done`}
