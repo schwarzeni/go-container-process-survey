@@ -8,6 +8,8 @@ exec 执行 sh 会报错（影响不大）：
 
 目前也不支持开机自动启动容器，也没有隔离文件系统，也没有使用镜像
 
+同时对传入程序的 arg 没有做验证，默认合法
+
 ## v1.0 功能
 
 ```bash
@@ -28,4 +30,19 @@ go run . start <id>
 
 # 登入运行的容器
 go run . exec <id> bash
+```
+
+## v2.0 功能
+
+```bash
+# 提供独立的文件系统，注意，不能是压缩包
+go run . -name "sh-1" -d -image "/path/to/fs"
+
+# 支持用户自己挂载 volume，注意，只能挂载一个，
+# src 为外部需要挂载的
+# dst 为容器内部的路径，挂载目的地
+go run . -name "sh-1" -d -image "/path/to/fs" -v "src:dst"
+
+# 导出正在运行的容器，注意，path为导出文件的完整路径，比如 /tmp/image.tar
+go run . commit <container_id> <path>
 ```

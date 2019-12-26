@@ -2,14 +2,12 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	_ "go-container-process-survey/cgo"
 	"go-container-process-survey/cgo_key"
 	"go-container-process-survey/container"
 	"log"
 	"os"
 	"os/exec"
-	"syscall"
 )
 
 var (
@@ -92,38 +90,5 @@ EXEC:
 
 	if err := container.RunContainer(defaultCmd, *runAsDaemon, *containerName, *imagePath, []string{*volumes}); err != nil {
 		log.Fatalf("Run container failed: %v", err)
-	}
-}
-
-func childProcess(fullCmd string, cmdAndArgs []string) {
-	var (
-		pwd string
-		err error
-	)
-	if pwd, err = os.Getwd(); err != nil {
-		fmt.Fprintf(os.Stderr, "Get current location error %v", err)
-		return
-	}
-
-	syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, "")
-
-	if err = pivotRoot(pwd); err != nil {
-		fmt.Fprintf(os.Stderr, "pivotRoot( %s ) error %v", pwd, err)
-		return
-	}
-
-	if err := syscall.Mount("proc", "/proc", "proc", syscall.MS_NOEXEC|syscall.MS_NOSUID|syscall.MS_NODEV, ""); err != nil {
-		fmt.Fprintf(os.Stderr, "mount proc error %v", err)
-		return
-	}
-
-	if err = syscall.Mount("tmpfs", "/dev", "tmpfs", syscall.MS_NOSUID|syscall.MS_STRICTATIME, "mode=0755"); err != nil {
-		fmt.Fprintf(os.Stderr, "mount tmpfs error %v", err)
-		return
-	}
-
-	if err := syscall.Exec(fullCmd, cmdAndArgs, os.Environ()); err != nil {
-		fmt.Fprintf(os.Stderr, "exec error %v", err)
-		return
 	}
 }

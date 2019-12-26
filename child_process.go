@@ -8,6 +8,39 @@ import (
 	"syscall"
 )
 
+func childProcess(fullCmd string, cmdAndArgs []string) {
+	var (
+		pwd string
+		err error
+	)
+	if pwd, err = os.Getwd(); err != nil {
+		fmt.Fprintf(os.Stderr, "Get current location error %v", err)
+		return
+	}
+
+	syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, "")
+
+	if err = pivotRoot(pwd); err != nil {
+		fmt.Fprintf(os.Stderr, "pivotRoot( %s ) error %v", pwd, err)
+		return
+	}
+
+	if err := syscall.Mount("proc", "/proc", "proc", syscall.MS_NOEXEC|syscall.MS_NOSUID|syscall.MS_NODEV, ""); err != nil {
+		fmt.Fprintf(os.Stderr, "mount proc error %v", err)
+		return
+	}
+
+	if err = syscall.Mount("tmpfs", "/dev", "tmpfs", syscall.MS_NOSUID|syscall.MS_STRICTATIME, "mode=0755"); err != nil {
+		fmt.Fprintf(os.Stderr, "mount tmpfs error %v", err)
+		return
+	}
+
+	if err := syscall.Exec(fullCmd, cmdAndArgs, os.Environ()); err != nil {
+		fmt.Fprintf(os.Stderr, "exec error %v", err)
+		return
+	}
+}
+
 // pivotRoot 改变挂载的位置
 func pivotRoot(rootpwd string) (err error) {
 	var pivotDir string // 存储 old_root 的路径
