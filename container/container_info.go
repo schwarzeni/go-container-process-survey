@@ -39,6 +39,7 @@ type containerInfo struct {
 	Status      string   `json:"status"`      // 容器状态
 	ImageURL    string   `json:"imageURL"`    // 镜像的存储位置
 	Volumes     []string `json:"volumes"`     // 挂载的数据卷
+	Envs        []string `json:"envs"`        // 用户传入的环境变量
 }
 
 // Info 存储容器相关信息的json结构

@@ -11,7 +11,7 @@ import (
 )
 
 // RecordContainerInfo 记录容器信息, 返回生成的容器的ID
-func RecordContainerInfo(id string, containerPID int, cmdArr []string, containerName string, imagePath string, volumes []string) (err error) {
+func RecordContainerInfo(id string, containerPID int, cmdArr []string, containerName string, imagePath string, volumes []string, envs []string) (err error) {
 	var (
 		// cmd        = strings.Join(cmdArr, " ")
 		createTime = time.Now().Format("2006-01-02 15:04:05") // 以当前的时间作为创建时间
@@ -35,6 +35,7 @@ func RecordContainerInfo(id string, containerPID int, cmdArr []string, container
 		Name:        containerName,
 		ImageURL:    imagePath,
 		Volumes:     volumes,
+		Envs:        envs,
 	}
 
 	// 将容器信息的对象 json 序列化成字符串

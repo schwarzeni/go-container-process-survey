@@ -1,3 +1,6 @@
+玩具项目，0分健壮性，0分测试覆盖
+
+
 pstree -apl | grep 'sh' -A3 -B3
 
 [文件句柄何时关闭？](./container/log.go)
@@ -38,11 +41,16 @@ go run . exec <id> bash
 # 提供独立的文件系统，注意，不能是压缩包
 go run . -name "sh-1" -d -image "/path/to/fs"
 
-# 支持用户自己挂载 volume，注意，只能挂载一个，
+# 支持用户自己挂载 volume，
+# 由于 golang 原生 flag 库局限性，只能挂载一个目录
 # src 为外部需要挂载的
 # dst 为容器内部的路径，挂载目的地
 go run . -name "sh-1" -d -image "/path/to/fs" -v "src:dst"
 
 # 导出正在运行的容器，注意，path为导出文件的完整路径，比如 /tmp/image.tar
 go run . commit <container_id> <path>
+
+# 添加环境变量
+# 由于 golang 原生 flag 库局限性，只能传入一个环境变量
+go run . -name "sh-1" -d -image "/path/to/fs" -e HELLO=WORLD
 ```

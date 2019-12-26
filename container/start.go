@@ -39,6 +39,7 @@ func StartContainerByID(id string) (err error) {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = stdLog
 	cmd.Stderr = stdLog
+	cmd.Env = append(os.Environ(), containerInfo.Envs...)
 
 	cmd.Dir = mntPoint
 	if err = aufs.CreateMountPoint(mntPoint, writerLayer, containerInfo.ImageURL); err != nil {

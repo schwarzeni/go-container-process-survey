@@ -11,9 +11,9 @@ import (
 )
 
 // RunContainer 启动一个新容器
-func RunContainer(defaultCmd []string, daemon bool, name string, imageURL string, volumes []string) (err error) {
+func RunContainer(defaultCmd []string, daemon bool, name string, imageURL string, volumes []string, envs []string) (err error) {
 	var (
-		containerID   = RandStringBytes(IDLen) //  // 生成容器的ID号
+		containerID   = randStringBytes(IDLen) //  // 生成容器的ID号
 		cmd           = exec.Command("/proc/self/exe")
 		writeLayerURL = getContainerWriterLayerDir(containerID)
 		mntPointURL   = getContainerMntPoint(containerID)
@@ -28,6 +28,7 @@ func RunContainer(defaultCmd []string, daemon bool, name string, imageURL string
 		return fmt.Errorf("create aufs workspace failed, %v", err)
 	}
 	cmd.Dir = mntPointURL
+	cmd.Env = append(os.Environ(), envs...)
 
 	if daemon { // 如果为后台运行模式，设置输出的文件
 		var stdLog *os.File
@@ -41,7 +42,7 @@ func RunContainer(defaultCmd []string, daemon bool, name string, imageURL string
 		return fmt.Errorf("cmd.Start() failed: %v", err)
 	}
 
-	if err = RecordContainerInfo(containerID, cmd.Process.Pid, defaultCmd, name, imageURL, volumes); err != nil { // 记录容器信息
+	if err = RecordContainerInfo(containerID, cmd.Process.Pid, defaultCmd, name, imageURL, volumes, envs); err != nil { // 记录容器信息
 		return fmt.Errorf("record container info failed: %v", err)
 	}
 
