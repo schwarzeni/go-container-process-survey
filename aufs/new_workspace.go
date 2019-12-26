@@ -8,7 +8,7 @@ import (
 )
 
 // NewWorkSpace 创建新的容器层
-func NewWorkSpace(imageURL string, mntURL string, writerLayerURL string, volume string) (err error) {
+func NewWorkSpace(imageURL string, mntURL string, writerLayerURL string, volumes []string) (err error) {
 	if err = createReadOnlyLayer(imageURL); err != nil {
 		goto ERR
 	}
@@ -18,16 +18,10 @@ func NewWorkSpace(imageURL string, mntURL string, writerLayerURL string, volume 
 	if err = CreateMountPoint(mntURL, imageURL, writerLayerURL); err != nil {
 		goto ERR
 	}
-	if len(volume) != 0 {
-		var volumeURLs []string
-		if volumeURLs, err = volumeURLExtract(volume); err != nil {
-			goto ERR
-		}
-		// if err = mountVolume(rootURL, mntURL, volumeURLs); err != nil {
-		// goto ERR
-		// }
-		log.Printf("%s mount on %s in container", volumeURLs[0], volumeURLs[1])
+	if err = CreateVolumes(mntURL, volumes); err != nil {
+		goto ERR
 	}
+
 	return
 ERR:
 	deleteWriteLayer(writerLayerURL)
@@ -78,6 +72,23 @@ func CreateMountPoint(mntURL string, imageURL string, writerLayerURL string) (er
 	cmd.Stdin = os.Stdin
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("cmd %s %v error %v", cmd.Path, cmd.Args, err)
+	}
+	return
+}
+
+// CreateVolumes 建立用户自定义的挂载点
+func CreateVolumes(mntURL string, volumes []string) (err error) {
+	for _, volume := range volumes {
+		if len(volume) != 0 {
+			var volumeURLs []string
+			if volumeURLs, err = volumeURLExtract(volume); err != nil {
+				return
+			}
+			if err = mountVolume(mntURL, volumeURLs); err != nil {
+				return
+			}
+			log.Printf("%s mount on %s in container", volumeURLs[0], volumeURLs[1])
+		}
 	}
 	return
 }

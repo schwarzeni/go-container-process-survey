@@ -44,6 +44,9 @@ func StartContainerByID(id string) (err error) {
 	if err = aufs.CreateMountPoint(mntPoint, writerLayer, containerInfo.ImageURL); err != nil {
 		return fmt.Errorf("create mount %s failed, %v", mntPoint, err)
 	}
+	if err = aufs.CreateVolumes(mntPoint, containerInfo.Volumes); err != nil {
+		return fmt.Errorf("create volume failed, %v", err)
+	}
 
 	if err = cmd.Start(); err != nil {
 		containerInfo.Status = EXIT

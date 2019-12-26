@@ -16,6 +16,7 @@ var (
 	runAsDaemon   = flag.Bool("d", false, "后台运行")
 	containerName = flag.String("name", "", "容器的名称")
 	imagePath     = flag.String("image", "/root/workplace_go/go-container-process-survey/build/busybox", "容器镜像文件系统的位置")
+	volumes       = flag.String("v", "/tmp/just_for_test:/test_for_volume", "挂载的数据卷")
 	// defaultCmd    = []string{"sh", "-c", `while true ; do sleep 2; done`}
 	defaultCmd = []string{"sh", "-c", `while true ; do sleep 2; echo \[$$\] $(date); done`}
 	// defaultCmd = []string{"sh", "-c", `for i in $(seq 1 4);do echo "Welcome $i";sleep 1;done`}
@@ -83,7 +84,7 @@ EXEC:
 		return
 	}
 
-	if err := container.RunContainer(defaultCmd, *runAsDaemon, *containerName, *imagePath, ""); err != nil {
+	if err := container.RunContainer(defaultCmd, *runAsDaemon, *containerName, *imagePath, []string{*volumes}); err != nil {
 		log.Fatalf("Run container failed: %v", err)
 	}
 }

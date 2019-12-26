@@ -11,7 +11,7 @@ import (
 )
 
 // RunContainer 启动一个新容器
-func RunContainer(defaultCmd []string, daemon bool, name string, imageURL string, volume string) (err error) {
+func RunContainer(defaultCmd []string, daemon bool, name string, imageURL string, volumes []string) (err error) {
 	var (
 		containerID   = RandStringBytes(IDLen) //  // 生成容器的ID号
 		cmd           = exec.Command("/proc/self/exe")
@@ -24,7 +24,7 @@ func RunContainer(defaultCmd []string, daemon bool, name string, imageURL string
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
-	if err = aufs.NewWorkSpace(imageURL, mntPointURL, writeLayerURL, volume); err != nil {
+	if err = aufs.NewWorkSpace(imageURL, mntPointURL, writeLayerURL, volumes); err != nil {
 		return fmt.Errorf("create aufs workspace failed, %v", err)
 	}
 	cmd.Dir = mntPointURL
@@ -41,7 +41,7 @@ func RunContainer(defaultCmd []string, daemon bool, name string, imageURL string
 		return fmt.Errorf("cmd.Start() failed: %v", err)
 	}
 
-	if err = RecordContainerInfo(containerID, cmd.Process.Pid, defaultCmd, name, imageURL); err != nil { // 记录容器信息
+	if err = RecordContainerInfo(containerID, cmd.Process.Pid, defaultCmd, name, imageURL, volumes); err != nil { // 记录容器信息
 		return fmt.Errorf("record container info failed: %v", err)
 	}
 
@@ -50,7 +50,7 @@ func RunContainer(defaultCmd []string, daemon bool, name string, imageURL string
 		signal.Notify(c, os.Interrupt) // 监听 ctrl+c 事件
 		go func() {
 			for range c {
-				aufs.DeleteWorkSpace(imageURL, mntPointURL, writeLayerURL, volume)
+				aufs.DeleteWorkSpace(mntPointURL, writeLayerURL, volumes)
 				DeleteContainerInfo(containerID)
 				if err := cmd.Process.Signal(os.Interrupt); err != nil {
 					log.Printf("send signal to child process failed, %v", err)

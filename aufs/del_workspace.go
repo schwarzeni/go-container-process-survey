@@ -7,16 +7,10 @@ import (
 )
 
 // DeleteWorkSpace 删除容器层
-func DeleteWorkSpace(imageURL string, mntURL string, writerLayerURL string, volume string) (err error) {
-	// if len(volume) != 0 {
-	// 	var volumeURLs []string
-	// 	if volumeURLs, err = volumeURLExtract(volume); err != nil {
-	// 		goto ERR
-	// 	}
-	// 	if err = umountVolume(rootURL, mntURL, volumeURLs); err != nil {
-	// 		goto ERR
-	// 	}
-	// }
+func DeleteWorkSpace(mntURL string, writerLayerURL string, volumes []string) (err error) {
+	if err = DeleteVolumes(mntURL, volumes); err != nil {
+		goto ERR
+	}
 	if err = DeleteMountPoint(mntURL); err != nil {
 		goto ERR
 	}
@@ -26,6 +20,22 @@ func DeleteWorkSpace(imageURL string, mntURL string, writerLayerURL string, volu
 	return
 ERR:
 	// TODO: handle error here
+	return
+}
+
+// DeleteVolumes 删除挂载的数据卷
+func DeleteVolumes(mntURL string, volumes []string) (err error) {
+	for _, volume := range volumes {
+		if len(volume) != 0 {
+			var volumeURLs []string
+			if volumeURLs, err = volumeURLExtract(volume); err != nil {
+				return
+			}
+			if err = umountVolume(mntURL, volumeURLs); err != nil {
+				return
+			}
+		}
+	}
 	return
 }
 

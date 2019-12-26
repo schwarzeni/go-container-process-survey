@@ -36,6 +36,7 @@ type containerInfo struct {
 	CreatedTime string   `json:"createTime"`  // 创建时间
 	Status      string   `json:"status"`      // 容器状态
 	ImageURL    string   `json:"imageURL"`    // 镜像的存储位置
+	Volumes     []string `json:"volumes"`     // 挂载的数据卷
 }
 
 // Info 存储容器相关信息的json结构

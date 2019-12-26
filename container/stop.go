@@ -27,9 +27,14 @@ func StopContainerByID(id string) (err error) {
 		return fmt.Errorf("stop container %s failed, %v", containerInfo.Pid, err)
 	}
 
+	// 解除用户自定义的挂载点
+	if err = aufs.DeleteVolumes(mntPoint, containerInfo.Volumes); err != nil {
+		return fmt.Errorf("umount volumes failed, %v", err)
+	}
+
 	// 解除对 挂载点 的依赖
 	if err = aufs.DeleteMountPoint(mntPoint); err != nil {
-		return fmt.Errorf("umount %s failed ", mntPoint)
+		return fmt.Errorf("umount %s failed, %v", mntPoint, err)
 	}
 
 	containerInfo.Status = STOP
