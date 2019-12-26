@@ -1,6 +1,9 @@
 package container
 
-import "fmt"
+import (
+	"fmt"
+	"path"
+)
 
 var (
 	// RUNNING 运行状态
@@ -17,6 +20,10 @@ var (
 	LogFileName string = "container.log"
 	// IDLen ID长度
 	IDLen int = 10
+	// writerLayerMntPoint 可写层挂载位置
+	writerLayerMntPoint = "aufs/writelayer"
+	// mntPoint 独立文件系统挂载位置
+	mntPoint = "aufs/mnt"
 )
 
 // 存储容器相关信息的json结构
@@ -28,6 +35,7 @@ type containerInfo struct {
 	FullCommand []string `json:"fullCommand"` // command and args
 	CreatedTime string   `json:"createTime"`  // 创建时间
 	Status      string   `json:"status"`      // 容器状态
+	ImageURL    string   `json:"imageURL"`    // 镜像的存储位置
 }
 
 // Info 存储容器相关信息的json结构
@@ -35,4 +43,12 @@ type Info containerInfo
 
 func getContainerInfoDir(id string) string {
 	return fmt.Sprintf(defaultInfoLocation, id)
+}
+
+func getContainerMntPoint(id string) string {
+	return path.Join(getContainerInfoDir(id), mntPoint)
+}
+
+func getContainerWriterLayerDir(id string) string {
+	return path.Join(getContainerInfoDir(id), writerLayerMntPoint)
 }

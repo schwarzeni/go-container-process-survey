@@ -15,6 +15,7 @@ import (
 var (
 	runAsDaemon   = flag.Bool("d", false, "后台运行")
 	containerName = flag.String("name", "", "容器的名称")
+	imagePath     = flag.String("image", "/root/workplace_go/go-container-process-survey/build/busybox", "容器镜像文件系统的位置")
 	// defaultCmd    = []string{"sh", "-c", `while true ; do sleep 2; done`}
 	defaultCmd = []string{"sh", "-c", `while true ; do sleep 2; echo \[$$\] $(date); done`}
 	// defaultCmd = []string{"sh", "-c", `for i in $(seq 1 4);do echo "Welcome $i";sleep 1;done`}
@@ -82,17 +83,38 @@ EXEC:
 		return
 	}
 
-	if err := container.RunContainer(defaultCmd, *runAsDaemon, *containerName); err != nil {
+	if err := container.RunContainer(defaultCmd, *runAsDaemon, *containerName, *imagePath, ""); err != nil {
 		log.Fatalf("Run container failed: %v", err)
 	}
 }
 
 func childProcess(fullCmd string, cmdAndArgs []string) {
+	var (
+		pwd string
+		err error
+	)
+	if pwd, err = os.Getwd(); err != nil {
+		fmt.Fprintf(os.Stderr, "Get current location error %v", err)
+		return
+	}
+
 	syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, "")
+
+	if err = pivotRoot(pwd); err != nil {
+		fmt.Fprintf(os.Stderr, "pivotRoot( %s ) error %v", pwd, err)
+		return
+	}
+
 	if err := syscall.Mount("proc", "/proc", "proc", syscall.MS_NOEXEC|syscall.MS_NOSUID|syscall.MS_NODEV, ""); err != nil {
 		fmt.Fprintf(os.Stderr, "mount proc error %v", err)
 		return
 	}
+
+	if err = syscall.Mount("tmpfs", "/dev", "tmpfs", syscall.MS_NOSUID|syscall.MS_STRICTATIME, "mode=0755"); err != nil {
+		fmt.Fprintf(os.Stderr, "mount tmpfs error %v", err)
+		return
+	}
+
 	if err := syscall.Exec(fullCmd, cmdAndArgs, os.Environ()); err != nil {
 		fmt.Fprintf(os.Stderr, "exec error %v", err)
 		return

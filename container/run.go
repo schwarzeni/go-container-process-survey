@@ -2,6 +2,7 @@ package container
 
 import (
 	"fmt"
+	"go-container-process-survey/aufs"
 	"log"
 	"os"
 	"os/exec"
@@ -10,10 +11,12 @@ import (
 )
 
 // RunContainer 启动一个新容器
-func RunContainer(defaultCmd []string, daemon bool, name string) (err error) {
+func RunContainer(defaultCmd []string, daemon bool, name string, imageURL string, volume string) (err error) {
 	var (
-		containerID = RandStringBytes(IDLen) //  // 生成容器的ID号
-		cmd         = exec.Command("/proc/self/exe")
+		containerID   = RandStringBytes(IDLen) //  // 生成容器的ID号
+		cmd           = exec.Command("/proc/self/exe")
+		writeLayerURL = getContainerWriterLayerDir(containerID)
+		mntPointURL   = getContainerMntPoint(containerID)
 	)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags: syscall.CLONE_NEWNS | syscall.CLONE_NEWPID |
@@ -21,6 +24,11 @@ func RunContainer(defaultCmd []string, daemon bool, name string) (err error) {
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
+	if err = aufs.NewWorkSpace(imageURL, mntPointURL, writeLayerURL, volume); err != nil {
+		return fmt.Errorf("create aufs workspace failed, %v", err)
+	}
+	cmd.Dir = mntPointURL
+
 	if daemon { // 如果为后台运行模式，设置输出的文件
 		var stdLog *os.File
 		if stdLog, err = StdLog(containerID); err != nil {
@@ -33,7 +41,7 @@ func RunContainer(defaultCmd []string, daemon bool, name string) (err error) {
 		return fmt.Errorf("cmd.Start() failed: %v", err)
 	}
 
-	if err = RecordContainerInfo(containerID, cmd.Process.Pid, defaultCmd, name); err != nil { // 记录容器信息
+	if err = RecordContainerInfo(containerID, cmd.Process.Pid, defaultCmd, name, imageURL); err != nil { // 记录容器信息
 		return fmt.Errorf("record container info failed: %v", err)
 	}
 
@@ -42,6 +50,7 @@ func RunContainer(defaultCmd []string, daemon bool, name string) (err error) {
 		signal.Notify(c, os.Interrupt) // 监听 ctrl+c 事件
 		go func() {
 			for range c {
+				aufs.DeleteWorkSpace(imageURL, mntPointURL, writeLayerURL, volume)
 				DeleteContainerInfo(containerID)
 				if err := cmd.Process.Signal(os.Interrupt); err != nil {
 					log.Printf("send signal to child process failed, %v", err)

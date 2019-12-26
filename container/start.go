@@ -2,6 +2,7 @@ package container
 
 import (
 	"fmt"
+	"go-container-process-survey/aufs"
 	"os"
 	"os/exec"
 	"strconv"
@@ -15,6 +16,8 @@ func StartContainerByID(id string) (err error) {
 		cmd           *exec.Cmd
 		stdLog        *os.File
 		fullcmd       = []string{"start"}
+		mntPoint      = getContainerMntPoint(id)
+		writerLayer   = getContainerWriterLayerDir(id)
 	)
 	if containerInfo, err = GetContainerInfoByID(id); err != nil {
 		return fmt.Errorf("get container %s from local failed, %v", id, err)
@@ -36,6 +39,11 @@ func StartContainerByID(id string) (err error) {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = stdLog
 	cmd.Stderr = stdLog
+
+	cmd.Dir = mntPoint
+	if err = aufs.CreateMountPoint(mntPoint, writerLayer, containerInfo.ImageURL); err != nil {
+		return fmt.Errorf("create mount %s failed, %v", mntPoint, err)
+	}
 
 	if err = cmd.Start(); err != nil {
 		containerInfo.Status = EXIT
