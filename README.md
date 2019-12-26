@@ -179,7 +179,7 @@ exec 执行 sh 会报错（影响不大）：
 
 ## v0.1 功能
 
-请 cd 到 `build/` 文件夹中自行解压 busybox.rar 至同级目录的 busybox 文件夹中（build/busybox）
+请 cd 到 `build/` 文件夹中自行解压 busybox.rar 至同级目录的 busybox 文件夹中（build/busybox，删除其中原有的内容）
 
 ```bash
 # 前台运行
