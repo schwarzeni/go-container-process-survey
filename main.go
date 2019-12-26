@@ -71,6 +71,12 @@ func main() {
 		}
 		return
 	}
+	if os.Args[1] == "commit" { // pack a container into a image: commit <id> <path>
+		if err := container.CommitContainer(os.Args[2], os.Args[3]); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 EXEC:
 	if os.Args[1] == "exec" { // 进入正在运行的容器内部，默认输入合法 exec <id> <cmd ...>
 		if os.Getenv(cgo_key.EnvFlag) != "" { // using cgo

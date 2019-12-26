@@ -24,6 +24,8 @@ var (
 	writerLayerMntPoint = "aufs/writelayer"
 	// mntPoint 独立文件系统挂载位置
 	mntPoint = "aufs/mnt"
+	// 默认导出文件的路径
+	defaultCommitDIR = "/tmp"
 )
 
 // 存储容器相关信息的json结构
